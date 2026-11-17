@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SahiReturn | Login & Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="loginScreen" class="login-screen">
+
+
+    <div class="login-container">
+
+        <!-- Brand -->
+        <div class="brand">
+            <h1>SahiReturn</h1>
+            <p>Returns & Management System</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="login-card">
+
+            <h2>Welcome Back!</h2>
+            <p class="subtitle">
+                Sign in to access your dashboard
+            </p>
+
+            <form id="loginForm">
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Enter your email"
+                        required
+                    >
+                </div>
+
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label>Select Role</label>
+
+                    <div class="role-options">
+
+                        <button type="button"
+                            class="role-option active"
+                            data-role="Customer">
+
+                            <span>♙</span>
+                            Customer
+                        </button>
+
+                        <button type="button"
+                            class="role-option"
+                            data-role="Retailer">
+
+                            <span>♢</span>
+                            Retailer
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Sign In -->
+                <button type="submit" class="signin-btn">
+                    Sign In
+                </button>
+
+                <p class="message" id="message"></p>
+
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                OR QUICK ACCESS
+            </div>
+
+            <!-- Demo Buttons -->
+            <div class="demo-buttons">
+
+                <button class="demo-btn" type="button"
+                    onclick="demoLogin('Customer')">
+                    ♢ Customer Demo
+                </button>
+
+                <button class="demo-btn" type="button"
+                    onclick="demoLogin('Retailer')">
+                    ♙ Retailer Demo
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Connection -->
+    
+
+
+  </section>
+  <div id="app" hidden>
+
+  <aside id="sidebar">
+    <div class="logo"><i class="fa-solid fa-shield-halved"></i><span>ReturnShield</span></div>
+    <nav id="nav"></nav>
+  </aside>
+  <div id="scrim"></div>
+  <div id="shell">
+    <header id="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+      <label class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="globalSearch" placeholder="Search products, orders, returns…"></label>
+      <span id="today" class="today"></span>
+      <div class="bell-wrap">
+        <button class="icon-btn" id="bell" aria-label="Notifications"><i class="fa-regular fa-bell"></i><b id="badge"></b></button>
+        <div id="notes" class="notes"></div>
+      </div>
+      <div class="user"><div class="avatar">AR</div><div><strong>Aarav Retail</strong><small>Bangalore Store</small></div></div>
+    </header>
+    <main id="view"></main>
+  </div>
+  <div id="modal" class="modal"><div class="modal-box" id="modalBox"></div></div>
+  <div id="toasts"></div>
+
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <script src="script.js"></script>
+</body>
+</html>
