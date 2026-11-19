@@ -117,6 +117,7 @@ const seed = () => ({
 
 let S = JSON.parse(localStorage.getItem(KEY) || 'null') || seed();
 S.asIsListings = S.asIsListings || [];
+S.dealers = S.dealers || S.deals || [];
 
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 const escapeHTML = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
@@ -288,6 +289,21 @@ const pages = {
     <p class="sub asis-legal-note">This is a listing and disclosure record, not a legal contract or title verification. Get appropriate legal advice and complete required ownership / encumbrance checks before a sale.</p>`;
   },
 
+  dealers() {
+    const dealers = S.dealers || [];
+    const count = type => dealers.filter(d => d.type === type).length;
+    return `<div class="head"><div><h1>Dealers &amp; Buyer Network</h1><p class="sub">Connect with second-hand buyers, wholesalers, retailers and recyclers.</p></div><button class="btn" onclick="openDealForm()"><i class="fa-solid fa-plus"></i>Add Contact</button></div>
+    <div class="grid g4 dealers-stats">
+      ${[['Second-hand buyers',count('Second-hand Buyer'),'fa-user-tag'],['Wholesalers',count('Wholesaler'),'fa-boxes-stacked'],['Retailers',count('Retailer'),'fa-store'],['Recyclers',count('Recycler'),'fa-recycle']].map(x=>`<div class="card stat"><div class="ic" style="background:#ede9fe;color:#7c3aed"><i class="fa-solid ${x[2]}"></i></div><div><b>${x[1]}</b><span>${x[0]}</span></div></div>`).join('')}
+    </div>
+    <div class="toolbar dealers-toolbar" style="margin-top:18px">
+      <input id="dealSearch" placeholder="Search name, company, product or location…" oninput="renderDealers()">
+      <select id="dealType" onchange="renderDealers()"><option value="">All contact types</option><option>Second-hand Buyer</option><option>Wholesaler</option><option>Retailer</option><option>Recycler</option></select>
+    </div>
+    <div id="dealersList">${dealers.length ? '' : `<div class="card">${empty('fa-handshake','No contacts added yet','Add trusted buyers, wholesalers, retailers or recyclers to start building your resale network.')}</div>`}</div>
+    <p class="sub dealers-note"><i class="fa-solid fa-circle-info"></i> Contact details are stored in this browser for this demo. Add only contacts who have agreed to be listed. Verify details before making a deal.</p>`;
+  },
+
   analytics() {
     const m = money();
     return `<div class="head"><div><h1>Loss Analytics</h1><p class="sub">See where returns cost you the most.</p></div></div>
@@ -307,6 +323,77 @@ const pages = {
     return `<div class="head"><div><h1>Settings</h1><p class="sub">Demo data is saved in this browser.</p></div></div><div class="card"><h3>Demo data</h3><p class="sub">Restore the original sample products, orders and returns.</p><button class="btn bad" onclick="confirmBox('This erases your changes and restores sample data.',()=>{S=seed();save();bell();go('dashboard');toast('Demo data reset')})">Reset demo data</button></div>`;
   }
 };
+
+function openDealForm() {
+  modal(`<h3>Add a business contact</h3><p class="sub">Save a buyer or resale partner in your Dealers directory.</p>
+    <div class="field"><label for="dealName">Contact person / business name *</label><input id="dealName" placeholder="e.g. ABC Traders"></div>
+    <div class="field"><label for="dealTypeInput">Contact type *</label><select id="dealTypeInput"><option>Second-hand Buyer</option><option>Wholesaler</option><option>Retailer</option><option>Recycler</option></select></div>
+    <div class="field"><label for="dealCompany">Company / shop name</label><input id="dealCompany" placeholder="Business name (optional)"></div>
+    <div class="field"><label for="dealCategory">Products / materials handled</label><input id="dealCategory" placeholder="e.g. Electronics, appliances, metal scrap"></div>
+    <div class="field"><label for="dealLocation">Location *</label><input id="dealLocation" placeholder="City, area"></div>
+    <div class="field"><label for="dealPhone">Phone number *</label><input id="dealPhone" type="tel" placeholder="Contact number"></div>
+    <div class="field"><label for="dealEmail">Email</label><input id="dealEmail" type="email" placeholder="Email address (optional)"></div>
+    <div class="field"><label for="dealNotes">Notes</label><textarea id="dealNotes" rows="2" placeholder="Preferred quantity, working hours, requirements…"></textarea></div>
+    <div class="actions"><button class="btn" id="saveDeal"><i class="fa-solid fa-floppy-disk"></i>Save Contact</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+  $('#saveDeal').onclick = () => {
+    const val = id => ($('#'+id).value || '').trim();
+    const contact = {
+      id:'DL-'+Date.now(),
+      name:val('dealName'),
+      type:val('dealTypeInput'),
+      company:val('dealCompany'),
+      category:val('dealCategory'),
+      location:val('dealLocation'),
+      phone:val('dealPhone'),
+      email:val('dealEmail'),
+      notes:val('dealNotes'),
+      createdAt:new Date().toISOString()
+    };
+    if(!contact.name || !contact.location || !contact.phone) {
+      return toast('Please enter the contact name, location and phone number');
+    }
+    if(contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+      return toast('Please enter a valid email address');
+    }
+    S.dealers = S.dealers || S.deals || [];
+    S.dealers.unshift(contact);
+    save();
+    closeModal();
+    go('dealers');
+    notify('New Dealers contact added: '+contact.name);
+    toast('Contact saved');
+  };
+}
+
+function renderDealers() {
+  const host = $('#dealersList');
+  if(!host) return;
+  const q = ($('#dealSearch')?.value || '').toLowerCase();
+  const type = $('#dealType')?.value || '';
+  const all = S.dealers || [];
+  const rows = all.filter(d =>
+    (!type || d.type === type) &&
+    [d.name,d.company,d.category,d.location,d.phone,d.email,d.notes,d.type].join(' ').toLowerCase().includes(q)
+  );
+  host.innerHTML = rows.length ? `<div class="grid g2">${rows.map(d => `<div class="card deal-card">
+    <div class="deal-top"><div><span class="pill info">${escapeHTML(d.type)}</span><h3>${escapeHTML(d.name)}</h3><p class="sub">${escapeHTML(d.company || 'Independent contact')}</p></div><div class="deal-icon"><i class="fa-solid ${{'Second-hand Buyer':'fa-user-tag','Wholesaler':'fa-boxes-stacked','Retailer':'fa-store','Recycler':'fa-recycle'}[d.type] || 'fa-handshake'}"></i></div></div>
+    <p class="deal-detail"><i class="fa-solid fa-location-dot"></i>${escapeHTML(d.location)}</p>
+    ${d.category ? `<p class="deal-detail"><i class="fa-solid fa-box"></i>${escapeHTML(d.category)}</p>` : ''}
+    <p class="deal-detail"><i class="fa-solid fa-phone"></i><a href="tel:${escapeHTML(d.phone)}">${escapeHTML(d.phone)}</a></p>
+    ${d.email ? `<p class="deal-detail"><i class="fa-solid fa-envelope"></i><a href="mailto:${escapeHTML(d.email)}">${escapeHTML(d.email)}</a></p>` : ''}
+    ${d.notes ? `<p class="deal-notes">${escapeHTML(d.notes)}</p>` : ''}
+    <div class="actions"><a class="btn sm" href="tel:${escapeHTML(d.phone)}"><i class="fa-solid fa-phone"></i>Call</a>${d.email ? `<a class="btn ghost sm" href="mailto:${escapeHTML(d.email)}"><i class="fa-solid fa-envelope"></i>Email</a>` : ''}<button class="btn bad sm" onclick="removeDeal('${d.id}')"><i class="fa-regular fa-trash-can"></i>Remove</button></div>
+  </div>`).join('')}</div>` : `<div class="card">${empty('fa-address-book','No matching contacts','Try another search or add a new contact.')}</div>`;
+}
+
+function removeDeal(id) {
+  confirmBox('Remove this contact from your Dealers directory?', () => {
+    S.dealers = (S.dealers || []).filter(d => d.id !== id);
+    save();
+    go('dealers');
+    toast('Contact removed');
+  });
+}
 
 function retTable(rows) {
   return rows.length ? `<div class="wrap"><table class="tbl"><tr><th>Product</th><th>Order ID</th><th>Reason</th><th>Status</th><th>Amount</th><th></th></tr>${rows.map(r=>{const p=prod(r.pid);return `<tr><td><img class="thumb" src="${p.img}" alt="">${p.name}</td><td>${r.order}</td><td>${r.reason}</td><td>${pill(r.status)}</td><td>${inr(r.amount)}</td><td><button class="btn ghost sm" onclick="go('returns')">View Details</button></td></tr>`}).join('')}</table></div>` : empty('fa-inbox','No returns yet','Return requests will show up here.');
@@ -488,6 +575,7 @@ const NAV = [
   ['returns','Return Requests','fa-rotate-left'],
   ['inspect','AI Inspection','fa-wand-magic-sparkles'],
   ['asis','As Is Where Is','fa-warehouse'],
+  ['dealers','Dealers','fa-handshake'],
   ['analytics','Loss Analytics','fa-chart-line'],
   ['evidence','Evidence Center','fa-folder-open'],
   ['settings','Settings','fa-gear']
@@ -509,6 +597,7 @@ function go(p) {
     location.hash = p;
 
     if(p==='products') listProducts();
+    if(p==='dealers') renderDealers();
 
     const g = 'rgba(124,58,237,';
 
